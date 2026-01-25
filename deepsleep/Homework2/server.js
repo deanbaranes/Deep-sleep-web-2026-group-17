@@ -21,6 +21,12 @@ app.get("/", (req, res) => {
     res.send("DeepSleep API Server is running");
 });
 
-app.listen(port, () => {
-    console.log(`Server running at http://localhost:${port}`);
-});
+// Export app for Vercel
+export default app;
+
+// Only listen when running locally
+if (process.env.NODE_ENV !== "production") {
+    app.listen(port, () => {
+        console.log(`Server running at http://localhost:${port}`);
+    });
+}
