@@ -179,8 +179,7 @@ export default function Login({ role, onLogin, onBack }) {
               value={username}
               onChange={(e) => setUsername(e.target.value)}
               className="w-full rounded-xl bg-indigo-950/40 border border-indigo-500/30 px-4 py-3 text-white placeholder-indigo-400 focus:ring-2 focus:ring-cyan-400 outline-none
-                         dark:bg-indigo-950/40 dark:text-white 
-                         bg-white/50 border-slate-400 text-slate-900 placeholder-slate-500"
+                         dark:bg-indigo-950/40 dark:border-indigo-500/30 dark:text-white dark:placeholder-indigo-400"
             />
           </div>
 
@@ -191,8 +190,7 @@ export default function Login({ role, onLogin, onBack }) {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               className="w-full rounded-xl bg-indigo-950/40 border border-indigo-500/30 px-4 py-3 text-white placeholder-indigo-400 focus:ring-2 focus:ring-cyan-400 outline-none
-                         dark:bg-indigo-950/40 dark:text-white 
-                         bg-white/50 border-slate-400 text-slate-900 placeholder-slate-500"
+                         dark:bg-indigo-950/40 dark:border-indigo-500/30 dark:text-white dark:placeholder-indigo-400"
             />
           </div>
 

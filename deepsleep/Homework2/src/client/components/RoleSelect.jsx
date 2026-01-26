@@ -36,10 +36,7 @@ export default function RoleSelect({ onSelect }) {
         </div>
       </GlassCard>
 
-      {/* Footer Branding */}
-      <div className="absolute bottom-4 text-indigo-500/30 text-xs font-mono tracking-widest pointer-events-none z-20">
-        DEEP-SLEEP LABS // PORTAL
-      </div>
+
     </SpaceLayout>
   );
 }
