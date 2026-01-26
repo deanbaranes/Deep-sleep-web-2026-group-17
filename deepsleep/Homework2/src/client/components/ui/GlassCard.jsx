@@ -9,7 +9,7 @@ import React from 'react';
  * @param {string} glowColor - 'cyan' | 'emerald' | 'indigo' | 'rose' (for shadow color)
  */
 export default function GlassCard({ children, className = "", animateFloat = false, glowColor = 'indigo' }) {
-  
+
   // Map glow colors to shadow classes
   const shadowColors = {
     cyan: 'shadow-cyan-500/20',
@@ -23,7 +23,25 @@ export default function GlassCard({ children, className = "", animateFloat = fal
   const floatClass = animateFloat ? 'animate-float' : '';
 
   return (
-    <div className={`glass-panel p-6 sm:p-10 relative z-20 shadow-2xl ${shadowClass} ${floatClass} ${className}`}>
+    <div className={`
+      relative z-20 
+      p-6 sm:p-10 
+      shadow-2xl 
+      transition-all duration-300
+      
+      /* Dark Mode: Original Glass Effect */
+      dark:glass-panel 
+      dark:${shadowClass}
+      
+      /* Light Mode: High Contrast "Lab" Style */
+      bg-white 
+      border-2 border-slate-900 
+      shadow-[4px_4px_0px_0px_rgba(15,23,42,1)] 
+      text-slate-900
+
+      ${floatClass} 
+      ${className}
+    `}>
       {children}
     </div>
   );
