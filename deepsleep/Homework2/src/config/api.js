@@ -1,17 +1,8 @@
-// In unified Vercel deployment, backend is on the same domain at /api
-let rawBaseUrl = import.meta.env.VITE_API_URL || "";
-
-// Normalize URL: Remove trailing slash
-if (rawBaseUrl.endsWith("/")) {
-    rawBaseUrl = rawBaseUrl.slice(0, -1);
-}
-
-// Prevent double "api" prefix: Remove "/api" from base URL if user added it
-if (rawBaseUrl.endsWith("/api")) {
-    rawBaseUrl = rawBaseUrl.slice(0, -4);
-}
-
-export const API_BASE_URL = rawBaseUrl;
+// In unified Vercel deployment (Option 2), we always use relative paths.
+// - In Production: Vercel rewrites /api to the backend.
+// - In Development: Vite proxy forwards /api to localhost:3000.
+// This completely eliminates configuration errors and double-slash issues.
+export const API_BASE_URL = "";
 
 /**
  * Wrapper around fetch to handle common API tasks
