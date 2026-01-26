@@ -3,6 +3,9 @@ import cors from "cors";
 import dotenv from "dotenv";
 import authRoutes from "./backend/routes/auth.js";
 import sleepRoutes from "./backend/routes/sleep.js";
+import questionsRoutes from "./backend/routes/questions.js";
+import researchRoutes from "./backend/routes/research.js";
+import teacherRoutes from "./backend/routes/teacher.js";
 
 dotenv.config();
 
@@ -16,6 +19,9 @@ app.use(express.json());
 // Routes
 app.use("/api/users", authRoutes);
 app.use("/api/sleep", sleepRoutes);
+app.use("/api/questions", questionsRoutes);
+app.use("/api/research", researchRoutes);
+app.use("/api/teacher", teacherRoutes);
 
 app.get("/", (req, res) => {
     res.send("DeepSleep API Server is running");

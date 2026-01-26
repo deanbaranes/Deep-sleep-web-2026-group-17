@@ -1,19 +1,14 @@
 /**
  * Logical Backend Service
  * -----------------------
- * This file is part of the server-side logic layer.
- * It abstracts the database operations (Firebase) from the client-side View layer.
- * All direct DB access should happen here.
+ * This file is part of the server-side logic layer (now Client Service Proxy).
+ * It abstracts the API calls from the client-side View layer.
  */
-import { db } from "../firebase";
-import { doc } from "firebase/firestore";
-
 import { apiClient } from "../../config/api";
 
 /**
  * Save sleep entry in hierarchical path
  * Uses Express server
- * experiments/{expId}/classes/{classId}/responses/{studentId_Date}
  */
 export async function saveSleepEntry(experimentId, classId, studentId, entry) {
   if (!experimentId || !classId || !studentId) {
@@ -41,14 +36,10 @@ export async function saveSleepEntry(experimentId, classId, studentId, entry) {
 /**
  * Return number of entries filled by user (for progress bar and unlock stages)
  */
-import { collection, query, where, getCountFromServer, getDocs, collectionGroup } from "firebase/firestore";
-
 export async function getUserSubmissionCount(experimentId, classId, studentId) {
   try {
-    const collRef = collection(db, "experiments", experimentId, "classes", classId, "responses");
-    const q = query(collRef, where("studentId", "==", studentId));
-    const snapshot = await getCountFromServer(q);
-    return snapshot.data().count;
+    const result = await apiClient(`/api/sleep/count/${experimentId}/${classId}/${studentId}`);
+    return result.count;
   } catch (err) {
     console.error("Error counting submissions:", err);
     return 0;
@@ -59,29 +50,13 @@ export async function getUserSubmissionCount(experimentId, classId, studentId) {
  * Return last submission time (timestamp) of student
  * To calculate when they can submit again (e.g. next day at 7am)
  */
-import { limit, orderBy } from "firebase/firestore";
-
 export async function getLastSubmissionTime(experimentId, classId, studentId) {
   try {
-    const collRef = collection(db, "experiments", experimentId, "classes", classId, "responses");
-    // Filter by student only, NO orderBy to avoid index requirement
-    const q = query(collRef, where("studentId", "==", studentId));
-    const snapshot = await getDocs(q);
-
-    if (snapshot.empty) return null;
-
-    // Client-side sort: Find the latest 'updatedAt'
-    const docs = snapshot.docs.map(d => d.data());
-
-    // Sort descending by date/time
-    docs.sort((a, b) => {
-      const timeA = a.updatedAt?.toDate ? a.updatedAt.toDate().getTime() : 0;
-      const timeB = b.updatedAt?.toDate ? b.updatedAt.toDate().getTime() : 0;
-      return timeB - timeA;
-    });
-
-    const latest = docs[0];
-    return latest.updatedAt ? latest.updatedAt.toDate() : null;
+    const result = await apiClient(`/api/sleep/last-time/${experimentId}/${classId}/${studentId}`);
+    if (result.lastTime) {
+      return new Date(result.lastTime);
+    }
+    return null;
   } catch (err) {
     console.error("Error fetching last submission time:", err);
     return null;
@@ -93,12 +68,8 @@ export async function getLastSubmissionTime(experimentId, classId, studentId) {
  */
 export async function fetchAllSleepEntries() {
   try {
-    const q = query(collectionGroup(db, "responses"));
-    const snap = await getDocs(q);
-    return snap.docs.map(d => ({
-      id: d.id,
-      ...d.data()
-    }));
+    const data = await apiClient("/api/sleep/all");
+    return data;
   } catch (err) {
     console.error("Error fetching all sleep entries:", err);
     return [];

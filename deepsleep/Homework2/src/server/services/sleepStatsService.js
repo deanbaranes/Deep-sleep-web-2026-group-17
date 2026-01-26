@@ -5,25 +5,19 @@
  * It abstracts the database operations (Firebase) from the client-side View layer.
  * All direct DB access should happen here.
  */
-import { db } from "../firebase";
-import { collectionGroup, getDocs, query } from "firebase/firestore";
+import { apiClient } from "../../config/api";
 
 // Fetch all forms from all experiments and classes
 export async function fetchAllSleepEntries() {
-  // Use collectionGroup to fetch all documents in "responses" collection
-  // Regardless of where they are in the hierarchy
-  const q = query(collectionGroup(db, "responses"));
-  const snap = await getDocs(q);
-  return snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+  const data = await apiClient("/api/sleep/all");
+  return data;
 }
 
 // Fetch forms for a specific class (for teacher)
-import { collection } from "firebase/firestore";
 export async function fetchClassSleepEntries(experimentId, classId) {
   if (!experimentId || !classId) return [];
-  const colRef = collection(db, "experiments", experimentId, "classes", classId, "responses");
-  const snap = await getDocs(colRef);
-  return snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+  const data = await apiClient(`/api/sleep/class/${experimentId}/${classId}`);
+  return data;
 }
 
 // Compute statistics for all questions

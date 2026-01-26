@@ -1,23 +1,13 @@
 /**
  * Logical Backend Service
  * -----------------------
- * This file is part of the server-side logic layer.
- * It abstracts the database operations (Firebase) from the client-side View layer.
- * All direct DB access should happen here.
+ * This file is part of the server-side logic layer (Client Proxy).
+ * It abstracts the API calls from the client-side View layer.
  */
-import { db } from "../firebase";
-import { doc, getDoc, serverTimestamp, setDoc } from "firebase/firestore";
+import { apiClient } from "../../config/api";
 
 export async function ensureResearcherSeed() {
-  const researcherRef = doc(db, "users", "researchManager_123");
-
-  const snap = await getDoc(researcherRef);
-  if (snap.exists()) return;
-
-  await setDoc(researcherRef, {
-    role: "researchManager",
-    username: "123",
-    password: "123",
-    createdAt: serverTimestamp(),
+  await apiClient("/api/users/seed-researcher", {
+    method: "POST"
   });
 }
