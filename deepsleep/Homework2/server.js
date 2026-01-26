@@ -21,6 +21,16 @@ app.get("/", (req, res) => {
     res.send("DeepSleep API Server is running");
 });
 
+// Global Error Handler
+app.use((err, req, res, next) => {
+    console.error(err.stack);
+    res.status(500).json({
+        error: "Internal Server Error",
+        message: err.message,
+        details: process.env.NODE_ENV === 'development' ? err.stack : undefined
+    });
+});
+
 // Export app for Vercel
 export default app;
 
