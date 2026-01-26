@@ -33,9 +33,19 @@ export async function apiClient(endpoint, { body, ...customConfig } = {}) {
         // Allow the caller to handle specific non-200 statuses if needed
         // by attaching the status to the error object if the response is not ok
         if (!response.ok) {
-            const error = new Error(`API Error: ${response.statusText}`);
+            let errorDetails = {};
+            try {
+                errorDetails = await response.json();
+            } catch (e) {
+                // If response is not JSON (e.g. fatal standard HTML error), get text
+                errorDetails = { message: await response.text() };
+            }
+
+            console.error("API Error Detailed:", errorDetails);
+
+            const error = new Error(errorDetails.message || `API Error: ${response.statusText}`);
             error.status = response.status;
-            error.response = response;
+            error.details = errorDetails; // Attach so consumer can use it
             throw error;
         }
 

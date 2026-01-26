@@ -2,9 +2,37 @@ import admin from "firebase-admin";
 import { createRequire } from "module";
 const require = createRequire(import.meta.url);
 // Check for environment variable first (Production)
-const serviceAccount = process.env.FIREBASE_SERVICE_ACCOUNT
-    ? JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT)
-    : require("./serviceAccountKey.json"); // Fallback to file (Local Development)
+let serviceAccount;
+
+// 1. Try Environment Variable
+if (process.env.FIREBASE_SERVICE_ACCOUNT) {
+    console.log("Found FIREBASE_SERVICE_ACCOUNT env var, attempting to parse...");
+    try {
+        serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
+        console.log("Successfully parsed FIREBASE_SERVICE_ACCOUNT.");
+    } catch (error) {
+        console.error("Error parsing FIREBASE_SERVICE_ACCOUNT JSON:", error.message);
+    }
+}
+
+// 2. Fallback to File (only if env var failed/missing)
+if (!serviceAccount) {
+    console.log("FIREBASE_SERVICE_ACCOUNT not found or invalid. Trying local file...");
+    try {
+        serviceAccount = require("./serviceAccountKey.json");
+        console.log("Loaded credentials from serviceAccountKey.json");
+    } catch (error) {
+        console.error("Could not load serviceAccountKey.json:", error.message);
+        // Do not crash immediately here, let check below handle it
+    }
+}
+
+// 3. Final Check
+if (!serviceAccount) {
+    console.error("CRITICAL: No Firebase credentials found via Env Var or File.");
+    // We throw a clear error that will show up in Vercel logs
+    throw new Error("Firebase Credentials Missing. Please checks FIREBASE_SERVICE_ACCOUNT environment variable.");
+}
 
 try {
     admin.initializeApp({
