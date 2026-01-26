@@ -1,10 +1,8 @@
 import { useState } from "react";
 import { loginWithDb } from "../../server/services/authDb";
-import { registerStudent } from "../../server/services/studentRegistrationService";
 import { registerTeacher } from "../../server/services/teacherService"; // Import registerTeacher
 
 const ROLE_LABEL = {
-  student: "תלמיד",
   teacher: "מורה",
   researchManager: "מנהל מחקר",
 };
@@ -19,8 +17,7 @@ export default function Login({ role, onLogin, onBack }) {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
 
-  // Register Only Fields
-  const [expId, setExpId] = useState("");
+  // Register Only Fields (Teacher)
   const [school, setSchool] = useState("");
   const [grade, setGrade] = useState("z"); // Default grade
   const [classNum, setClassNum] = useState("");
@@ -35,12 +32,10 @@ export default function Login({ role, onLogin, onBack }) {
   let canSubmit = false;
   if (isRegister) {
     // Basic validation
-    // If teacher, expId is not required (we use default). 
-    const expValid = role === 'teacher' ? true : expId.trim();
     // If teacher, require fullName
     const nameValid = role === 'teacher' ? fullName.trim() : true;
 
-    canSubmit = username.trim() && password.trim() && expValid && school.trim() && classNum.trim() && nameValid && !loading;
+    canSubmit = username.trim() && password.trim() && school.trim() && classNum.trim() && nameValid && !loading;
   } else {
     canSubmit = username.trim() !== "" && password.trim() !== "" && !loading;
   }
@@ -65,7 +60,7 @@ export default function Login({ role, onLogin, onBack }) {
         let newUser;
         if (role === 'teacher') {
           // Default to "Exp1" to match Manager Dashboard default
-          const effectiveExpId = expId.trim() || "Exp1";
+          const effectiveExpId = "Exp1";
           newUser = await registerTeacher({
             experimentId: effectiveExpId,
             teacherName: fullName, // Use fullName for teacher's name
@@ -76,15 +71,8 @@ export default function Login({ role, onLogin, onBack }) {
             classNum: classNum
           });
         } else {
-          // Student
-          newUser = await registerStudent({
-            experimentId: expId,
-            username: username,
-            password: password,
-            schoolName: school,
-            grade: hebrewGrade, // Send Hebrew Letter
-            classNum: classNum
-          });
+          // Should not happen as student button is removed
+          throw new Error("Invalid role for registration");
         }
 
         // Auto-login after register
@@ -118,11 +106,11 @@ export default function Login({ role, onLogin, onBack }) {
   return (
     <SpaceLayout>
       <GlassCard className="w-full max-w-md my-8" glowColor={isRegister ? "cyan" : "indigo"}>
-        <h1 className="mb-2 text-center text-3xl font-bold text-white drop-shadow-md">
+        <h1 className="mb-2 text-center text-3xl font-bold text-white dark:text-white drop-shadow-md dark:drop-shadow-md text-slate-900 drop-shadow-none">
           {isRegister ? "הרשמה למערכת" : `התחברות ${roleLabel}`}
         </h1>
 
-        <p className="mb-6 text-center text-sm text-indigo-300">
+        <p className="mb-6 text-center text-sm text-indigo-300 dark:text-indigo-300 text-slate-600">
           {isRegister ? "מלא את הפרטים כדי להצטרף לניסוי" : "הזן פרטים כדי להמשיך"}
         </p>
 
@@ -131,14 +119,6 @@ export default function Login({ role, onLogin, onBack }) {
           {/* REGISTER EXTRA FIELDS */}
           {isRegister && (
             <div className="space-y-4 animate-fadeIn">
-              {/* Experiment ID - Visible for everyone now, defaulting to Exp1 */}
-              <input
-                type="text"
-                placeholder="קוד ניסוי (ברירת מחדל: Exp1)"
-                value={expId}
-                onChange={(e) => setExpId(e.target.value)}
-                className="w-full rounded-xl bg-indigo-950/40 border border-indigo-500/30 px-4 py-3 text-white placeholder-indigo-400 focus:ring-2 focus:ring-cyan-400 outline-none"
-              />
 
               {role === 'teacher' && (
                 <input
@@ -146,7 +126,9 @@ export default function Login({ role, onLogin, onBack }) {
                   placeholder="שם מלא (להצגה לתלמידים)"
                   value={fullName}
                   onChange={(e) => setFullName(e.target.value)}
-                  className="w-full rounded-xl bg-indigo-950/40 border border-indigo-500/30 px-4 py-3 text-white placeholder-indigo-400 focus:ring-2 focus:ring-cyan-400 outline-none"
+                  className="w-full rounded-xl bg-indigo-950/40 border border-indigo-500/30 px-4 py-3 text-white placeholder-indigo-400 focus:ring-2 focus:ring-cyan-400 outline-none
+                             dark:bg-indigo-950/40 dark:border-indigo-500/30 dark:text-white dark:placeholder-indigo-400
+                             bg-white border-2 border-slate-300 text-slate-900 placeholder-slate-400 focus:border-indigo-500"
                 />
               )}
 
@@ -155,7 +137,9 @@ export default function Login({ role, onLogin, onBack }) {
                 placeholder="שם בית ספר (חייב להיות זהה להגדרת המנהל)"
                 value={school}
                 onChange={(e) => setSchool(e.target.value)}
-                className="w-full rounded-xl bg-indigo-950/40 border border-indigo-500/30 px-4 py-3 text-white placeholder-indigo-400 focus:ring-2 focus:ring-cyan-400 outline-none mb-3"
+                className="w-full rounded-xl bg-indigo-950/40 border border-indigo-500/30 px-4 py-3 text-white placeholder-indigo-400 focus:ring-2 focus:ring-cyan-400 outline-none mb-3
+                           dark:bg-indigo-950/40 dark:border-indigo-500/30 dark:text-white dark:placeholder-indigo-400
+                           bg-white border-2 border-slate-300 text-slate-900 placeholder-slate-400 focus:border-indigo-500"
               />
 
               <div className="grid grid-cols-2 gap-2">
@@ -164,13 +148,17 @@ export default function Login({ role, onLogin, onBack }) {
                   placeholder="מס' כיתה (למשל: 5)"
                   value={classNum}
                   onChange={(e) => setClassNum(e.target.value)}
-                  className="w-full rounded-xl bg-indigo-950/40 border border-indigo-500/30 px-4 py-3 text-white placeholder-indigo-400 focus:ring-2 focus:ring-cyan-400 outline-none"
+                  className="w-full rounded-xl bg-indigo-950/40 border border-indigo-500/30 px-4 py-3 text-white placeholder-indigo-400 focus:ring-2 focus:ring-cyan-400 outline-none
+                             dark:bg-indigo-950/40 dark:border-indigo-500/30 dark:text-white dark:placeholder-indigo-400
+                             bg-white border-2 border-slate-300 text-slate-900 placeholder-slate-400 focus:border-indigo-500"
                 />
 
                 <select
                   value={grade}
                   onChange={(e) => setGrade(e.target.value)}
-                  className="w-full rounded-xl bg-indigo-950/40 border border-indigo-500/30 px-4 py-3 text-white focus:ring-2 focus:ring-cyan-400 outline-none"
+                  className="w-full rounded-xl bg-indigo-950/40 border border-indigo-500/30 px-4 py-3 text-white focus:ring-2 focus:ring-cyan-400 outline-none
+                             dark:bg-indigo-950/40 dark:border-indigo-500/30 dark:text-white dark:placeholder-indigo-400
+                             bg-white border-2 border-slate-300 text-slate-900 placeholder-slate-400 focus:border-indigo-500"
                 >
                   <option value="z">שכבה ז'</option>
                   <option value="h">שכבה ח'</option>
@@ -190,7 +178,9 @@ export default function Login({ role, onLogin, onBack }) {
               placeholder={isRegister ? "בחר שם משתמש" : "שם משתמש"}
               value={username}
               onChange={(e) => setUsername(e.target.value)}
-              className="w-full rounded-xl bg-indigo-950/40 border border-indigo-500/30 px-4 py-3 text-white placeholder-indigo-400 focus:ring-2 focus:ring-cyan-400 outline-none"
+              className="w-full rounded-xl bg-indigo-950/40 border border-indigo-500/30 px-4 py-3 text-white placeholder-indigo-400 focus:ring-2 focus:ring-cyan-400 outline-none
+                         dark:bg-indigo-950/40 dark:border-indigo-500/30 dark:text-white dark:placeholder-indigo-400
+                         bg-white border-2 border-slate-300 text-slate-900 placeholder-slate-400 focus:border-indigo-500"
             />
           </div>
 
@@ -200,7 +190,9 @@ export default function Login({ role, onLogin, onBack }) {
               placeholder={isRegister ? "בחר סיסמה" : "סיסמה"}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full rounded-xl bg-indigo-950/40 border border-indigo-500/30 px-4 py-3 text-white placeholder-indigo-400 focus:ring-2 focus:ring-cyan-400 outline-none"
+              className="w-full rounded-xl bg-indigo-950/40 border border-indigo-500/30 px-4 py-3 text-white placeholder-indigo-400 focus:ring-2 focus:ring-cyan-400 outline-none
+                         dark:bg-indigo-950/40 dark:border-indigo-500/30 dark:text-white dark:placeholder-indigo-400
+                         bg-white border-2 border-slate-300 text-slate-900 placeholder-slate-400 focus:border-indigo-500"
             />
           </div>
 
@@ -222,10 +214,10 @@ export default function Login({ role, onLogin, onBack }) {
             </div>
           )}
 
-          {/* TOGGLE REGISTER MODE (Students & Teachers) */}
-          {(role === 'student' || role === 'teacher') && (
-            <div className="text-center pt-2 border-t border-white/10 mt-4">
-              <span className="text-indigo-300 text-sm ml-2">
+          {/* TOGGLE REGISTER MODE (Teachers Only) */}
+          {role === 'teacher' && (
+            <div className="text-center pt-2 border-t border-white/10 mt-4 dark:border-white/10 border-slate-300">
+              <span className="text-indigo-300 text-sm ml-2 dark:text-indigo-300 text-slate-600">
                 {isRegister ? "כבר יש לך משתמש?" : "אין לך עדיין משתמש?"}
               </span>
               <button
@@ -233,7 +225,7 @@ export default function Login({ role, onLogin, onBack }) {
                   setError("");
                   setIsRegister(!isRegister);
                 }}
-                className="text-cyan-400 font-bold hover:text-cyan-300 underline decoration-cyan-500/30 underline-offset-4 transition-colors"
+                className="text-cyan-400 font-bold hover:text-cyan-300 underline decoration-cyan-500/30 underline-offset-4 transition-colors dark:text-cyan-400 text-blue-600"
               >
                 {isRegister ? "התחבר כאן" : "הירשם עכשיו"}
               </button>
@@ -242,14 +234,14 @@ export default function Login({ role, onLogin, onBack }) {
 
           <button
             onClick={onBack}
-            className="w-full text-indigo-400 hover:text-white transition-colors text-sm mt-2"
+            className="w-full text-indigo-400 hover:text-white transition-colors text-sm mt-2 dark:text-indigo-400 dark:hover:text-white text-slate-500 hover:text-slate-800"
           >
             חזרה לתפריט הראשי
           </button>
         </div>
       </GlassCard>
 
-      <div className="absolute bottom-4 text-indigo-500/30 text-xs font-mono tracking-widest pointer-events-none z-20">
+      <div className="absolute bottom-4 text-indigo-500/30 text-xs font-mono tracking-widest pointer-events-none z-20 dark:text-indigo-500/30 text-slate-400">
         DEEP-SLEEP LABS // AUTH // {isRegister ? "REGISTRATION" : "LOGIN"}
       </div>
     </SpaceLayout >
