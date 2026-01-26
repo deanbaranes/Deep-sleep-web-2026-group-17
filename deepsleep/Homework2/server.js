@@ -7,14 +7,24 @@ import questionsRoutes from "./backend/routes/questions.js";
 import researchRoutes from "./backend/routes/research.js";
 import teacherRoutes from "./backend/routes/teacher.js";
 
+console.log("------------------------------------------------");
+console.log("DEBUG: Loading Routes...");
+console.log("DEBUG: Auth Routes Stack:", authRoutes?.stack?.length);
+console.log("DEBUG: Sleep Routes Stack:", sleepRoutes?.stack?.length);
+console.log("DEBUG: Teacher Routes Stack:", teacherRoutes?.stack?.length);
+console.log("------------------------------------------------");
+
+
 dotenv.config();
 
 const app = express();
-const port = process.env.PORT || 3000;
+const port = 3333; // FORCE PORT FOR DEBUGGING
 
 // Middleware
 app.use(cors());
 app.use(express.json());
+
+app.get("/test", (req, res) => res.send("TEST WORKS"));
 
 // Routes
 app.use("/api/users", authRoutes);

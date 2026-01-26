@@ -108,12 +108,9 @@ router.post("/register", async (req, res) => {
 
 // POST /api/teacher/create - Manager create teacher
 router.post("/create", async (req, res) => {
-    // Logic is almost identical to register, can reuse
-    // But distinct endpoint allows different access controls later
-    // For now, implementing same logic
     try {
         const { experimentId, teacherName, email, password, schoolName, grade, classNum } = req.body;
-        // ... (validation same as register)
+
         if (!experimentId || !teacherName || !email || !password || !schoolName || !grade || !classNum) {
             return res.status(400).json({ error: "Missing required fields" });
         }
@@ -130,9 +127,6 @@ router.post("/create", async (req, res) => {
 
         const customId = `Teacher-${derivedClassId}-${sanitize(teacherName)}`;
 
-        // Assumes Exp/Class might not exist? Or should?
-        // Let's safe-create them as in register
-        // ... (same DB calls)
         await db.collection("experiments").doc(experimentId).set({
             id: experimentId,
             lastUpdated: admin.firestore.FieldValue.serverTimestamp()

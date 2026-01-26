@@ -114,6 +114,17 @@ export default function Login({ role, onLogin, onBack }) {
           {isRegister ? "מלא את הפרטים כדי להצטרף לניסוי" : "הזן פרטים כדי להמשיך"}
         </p>
 
+        <style>{`
+          .autofill-fix:-webkit-autofill,
+          .autofill-fix:-webkit-autofill:hover, 
+          .autofill-fix:-webkit-autofill:focus, 
+          .autofill-fix:-webkit-autofill:active {
+            -webkit-box-shadow: 0 0 0 1000px #1e1b4b inset !important;
+            -webkit-text-fill-color: white !important;
+            transition: background-color 5000s ease-in-out 0s;
+          }
+        `}</style>
+
         <div className="space-y-4">
 
           {/* REGISTER EXTRA FIELDS */}
@@ -127,8 +138,7 @@ export default function Login({ role, onLogin, onBack }) {
                   value={fullName}
                   onChange={(e) => setFullName(e.target.value)}
                   className="w-full rounded-xl bg-indigo-950/40 border border-indigo-500/30 px-4 py-3 text-white placeholder-indigo-400 focus:ring-2 focus:ring-cyan-400 outline-none
-                             dark:bg-indigo-950/40 dark:border-indigo-500/30 dark:text-white dark:placeholder-indigo-400
-                             bg-white border-2 border-slate-300 text-slate-900 placeholder-slate-400 focus:border-indigo-500"
+                             autofill-fix"
                 />
               )}
 
@@ -138,8 +148,7 @@ export default function Login({ role, onLogin, onBack }) {
                 value={school}
                 onChange={(e) => setSchool(e.target.value)}
                 className="w-full rounded-xl bg-indigo-950/40 border border-indigo-500/30 px-4 py-3 text-white placeholder-indigo-400 focus:ring-2 focus:ring-cyan-400 outline-none mb-3
-                           dark:bg-indigo-950/40 dark:border-indigo-500/30 dark:text-white dark:placeholder-indigo-400
-                           bg-white border-2 border-slate-300 text-slate-900 placeholder-slate-400 focus:border-indigo-500"
+                           autofill-fix"
               />
 
               <div className="grid grid-cols-2 gap-2">
@@ -149,16 +158,14 @@ export default function Login({ role, onLogin, onBack }) {
                   value={classNum}
                   onChange={(e) => setClassNum(e.target.value)}
                   className="w-full rounded-xl bg-indigo-950/40 border border-indigo-500/30 px-4 py-3 text-white placeholder-indigo-400 focus:ring-2 focus:ring-cyan-400 outline-none
-                             dark:bg-indigo-950/40 dark:border-indigo-500/30 dark:text-white dark:placeholder-indigo-400
-                             bg-white border-2 border-slate-300 text-slate-900 placeholder-slate-400 focus:border-indigo-500"
+                             autofill-fix"
                 />
 
                 <select
                   value={grade}
                   onChange={(e) => setGrade(e.target.value)}
                   className="w-full rounded-xl bg-indigo-950/40 border border-indigo-500/30 px-4 py-3 text-white focus:ring-2 focus:ring-cyan-400 outline-none
-                             dark:bg-indigo-950/40 dark:border-indigo-500/30 dark:text-white dark:placeholder-indigo-400
-                             bg-white border-2 border-slate-300 text-slate-900 placeholder-slate-400 focus:border-indigo-500"
+                             autofill-fix [&>option]:bg-indigo-900"
                 >
                   <option value="z">שכבה ז'</option>
                   <option value="h">שכבה ח'</option>
@@ -179,7 +186,7 @@ export default function Login({ role, onLogin, onBack }) {
               value={username}
               onChange={(e) => setUsername(e.target.value)}
               className="w-full rounded-xl bg-indigo-950/40 border border-indigo-500/30 px-4 py-3 text-white placeholder-indigo-400 focus:ring-2 focus:ring-cyan-400 outline-none
-                         dark:bg-indigo-950/40 dark:border-indigo-500/30 dark:text-white dark:placeholder-indigo-400"
+                         autofill-fix"
             />
           </div>
 
@@ -190,7 +197,7 @@ export default function Login({ role, onLogin, onBack }) {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               className="w-full rounded-xl bg-indigo-950/40 border border-indigo-500/30 px-4 py-3 text-white placeholder-indigo-400 focus:ring-2 focus:ring-cyan-400 outline-none
-                         dark:bg-indigo-950/40 dark:border-indigo-500/30 dark:text-white dark:placeholder-indigo-400"
+                         autofill-fix"
             />
           </div>
 

@@ -175,11 +175,7 @@ export default function TeacherDashboard() {
       </GlassCard>
 
       {/* Footer Branding & Debug Info */}
-      <div className="absolute bottom-4 flex flex-col items-center">
-        <div className="text-emerald-500/50 text-xs font-mono tracking-widest pointer-events-none z-20 mb-1">
-          DEEP-SLEEP LABS // TEACHER PORTAL
-        </div>
-      </div>
+      {/* Footer Branding & Debug Info Removed */}
     </SpaceLayout>
   );
 }
