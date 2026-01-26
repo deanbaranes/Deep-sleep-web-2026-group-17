@@ -6,10 +6,8 @@ let serviceAccount;
 
 // 1. Try Environment Variable
 if (process.env.FIREBASE_SERVICE_ACCOUNT) {
-    console.log("Found FIREBASE_SERVICE_ACCOUNT env var, attempting to parse...");
     try {
         serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
-        console.log("Successfully parsed FIREBASE_SERVICE_ACCOUNT.");
     } catch (error) {
         console.error("Error parsing FIREBASE_SERVICE_ACCOUNT JSON:", error.message);
     }
@@ -17,13 +15,10 @@ if (process.env.FIREBASE_SERVICE_ACCOUNT) {
 
 // 2. Fallback to File (only if env var failed/missing)
 if (!serviceAccount) {
-    console.log("FIREBASE_SERVICE_ACCOUNT not found or invalid. Trying local file...");
     try {
         serviceAccount = require("./serviceAccountKey.json");
-        console.log("Loaded credentials from serviceAccountKey.json");
     } catch (error) {
-        console.error("Could not load serviceAccountKey.json:", error.message);
-        // Do not crash immediately here, let check below handle it
+        // Silent fallback, final check will catch it
     }
 }
 
