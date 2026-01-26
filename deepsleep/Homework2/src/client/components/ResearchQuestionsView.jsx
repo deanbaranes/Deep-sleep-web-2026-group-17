@@ -14,7 +14,7 @@ export default function ResearchQuestionsView({ onBack }) {
         { id: "mental", label: "חוויה נפשית" },
         { id: "environment", label: "הפרעות סביבתיות" },
         { id: "exercise", label: "פעילות גופנית" },
-        { id: "general", label: "כללי/אחר" }
+        { id: "general", label: "אחר" }
     ];
 
     const [pendingQuestions, setPendingQuestions] = useState([]);
