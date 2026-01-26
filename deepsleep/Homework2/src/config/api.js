@@ -48,7 +48,8 @@ export async function apiClient(endpoint, { body, ...customConfig } = {}) {
                 errorDetails = { message: "Could not read error response body" };
             }
 
-            console.error("API Error Detailed:", errorDetails);
+            // Cleaned up console log for production
+            // console.error("API Error Detailed:", errorDetails);
 
             const error = new Error(errorDetails.message || `API Error: ${response.statusText}`);
             error.status = response.status;
