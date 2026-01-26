@@ -35,10 +35,17 @@ export async function apiClient(endpoint, { body, ...customConfig } = {}) {
         if (!response.ok) {
             let errorDetails = {};
             try {
-                errorDetails = await response.json();
+                // Read text ONCE to avoid "body stream already read" errors
+                const errorText = await response.text();
+                try {
+                    errorDetails = JSON.parse(errorText);
+                } catch {
+                    // Fallback if parsing fails (e.g. HTML error page)
+                    errorDetails = { message: errorText || response.statusText };
+                }
             } catch (e) {
-                // If response is not JSON (e.g. fatal standard HTML error), get text
-                errorDetails = { message: await response.text() };
+                // If we can't even read the text (e.g. network error mid-stream)
+                errorDetails = { message: "Could not read error response body" };
             }
 
             console.error("API Error Detailed:", errorDetails);
