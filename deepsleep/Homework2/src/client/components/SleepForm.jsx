@@ -343,9 +343,7 @@ export default function SleepForm() {
 
       </GlassCard>
 
-      <div className="absolute bottom-4 text-indigo-500/30 text-xs font-mono tracking-widest pointer-events-none z-20 flex flex-col items-center">
-        <span>DEEP-SLEEP LABS // V2.0</span>
-      </div>
+
 
     </SpaceLayout>
   );

@@ -241,9 +241,7 @@ export default function Login({ role, onLogin, onBack }) {
         </div>
       </GlassCard>
 
-      <div className="absolute bottom-4 text-indigo-500/30 text-xs font-mono tracking-widest pointer-events-none z-20 dark:text-indigo-500/30 text-slate-400">
-        DEEP-SLEEP LABS // AUTH // {isRegister ? "REGISTRATION" : "LOGIN"}
-      </div>
+
     </SpaceLayout >
   );
 }
