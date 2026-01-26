@@ -3,6 +3,7 @@
 // - In Development: Vite proxy forwards /api to localhost:3000.
 // This completely eliminates configuration errors and double-slash issues.
 export const API_BASE_URL = "";
+console.log("DEBUG: Current API_BASE_URL is:", API_BASE_URL, "| If you see /api/api, check source map.");
 
 /**
  * Wrapper around fetch to handle common API tasks
