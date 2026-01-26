@@ -92,7 +92,10 @@ export default function ResearchReportsView({ onBack }) {
             // 4. Create Workbook
             const worksheet = XLSX.utils.json_to_sheet(rows, { header: headers });
             const workbook = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(workbook, worksheet, category.label);
+
+            // Sanitize sheet name (remove : \ / ? * [ ])
+            const validSheetName = category.label.replace(/[:\\/?*\[\]]/g, "-");
+            XLSX.utils.book_append_sheet(workbook, worksheet, validSheetName);
 
             // 5. Download
             XLSX.writeFile(workbook, `Report_${category.id}_${new Date().toISOString().slice(0, 10)}.xlsx`);
