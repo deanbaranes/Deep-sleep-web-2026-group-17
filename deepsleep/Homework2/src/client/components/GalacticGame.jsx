@@ -2,17 +2,49 @@ import { useEffect, useRef, useState } from 'react';
 
 export default function GalacticGame({ dayCount, onClose }) {
     const canvasRef = useRef(null);
-    const [gameState, setGameState] = useState('start'); // start, playing, gameover
+    const [gameState, setGameState] = useState('start'); // start, playing, gameover, locked
     const [score, setScore] = useState(0);
 
-    // Difficulty scaling based on Day Count (Level 1 to 14+)
-    // More days = Faster speed, more asteroids
+    // ניהול ניסיונות - שמירה בלוקל סטורג' כדי שזה יישמר גם אם מרעננים
+    const STORAGE_KEY = `galactic_attempts_day_${dayCount}`;
+    const MAX_ATTEMPTS = 3;
+
+    const [attempts, setAttempts] = useState(() => {
+        // קריאה ראשונית מהזיכרון
+        const saved = localStorage.getItem(STORAGE_KEY);
+        return saved ? parseInt(saved, 10) : 0;
+    });
+
+    // פונקציה שמתחילה משחק (או ניסיון חוזר) וסופרת ניסיון
+    const handleStartGame = () => {
+        if (attempts >= MAX_ATTEMPTS) {
+            setGameState('locked');
+            return;
+        }
+
+        // העלאת מונה הניסיונות ושמירה מיידית
+        const newAttempts = attempts + 1;
+        setAttempts(newAttempts);
+        localStorage.setItem(STORAGE_KEY, newAttempts.toString());
+
+        setScore(0);
+        setGameState('playing');
+    };
+
+    // בדיקה ראשונית - אם המשתמש נכנס וכבר גמר את הניסיונות
+    useEffect(() => {
+        if (attempts >= MAX_ATTEMPTS && gameState === 'start') {
+            setGameState('locked');
+        }
+    }, [attempts, gameState]);
+
+    // Difficulty scaling based on Day Count
     const baseSpeed = 4 + (dayCount * 0.5);
     const spawnRate = Math.max(20, 60 - (dayCount * 2));
 
     useEffect(() => {
         const canvas = canvasRef.current;
-        if (!canvas) return;
+        if (!canvas || gameState !== 'playing') return;
 
         // Set initial size
         canvas.width = canvas.parentElement.clientWidth;
@@ -34,7 +66,7 @@ export default function GalacticGame({ dayCount, onClose }) {
         const handleKeyUp = (e) => (keys[e.code] = false);
 
         const handleTouchStart = (e) => {
-            e.preventDefault(); // Prevent scrolling
+            e.preventDefault();
             const touchY = e.touches[0].clientY;
             const middle = window.innerHeight / 2;
             if (touchY < middle) {
@@ -46,16 +78,15 @@ export default function GalacticGame({ dayCount, onClose }) {
             }
         };
 
-        const handleTouchEnd = (e) => {
+        const handleTouchEnd = () => {
             keys.ArrowUp = false;
             keys.ArrowDown = false;
         };
 
         window.addEventListener('keydown', handleKeyDown);
         window.addEventListener('keyup', handleKeyUp);
-        // Mobile Touch Listeners
         canvas.addEventListener('touchstart', handleTouchStart, { passive: false });
-        canvas.addEventListener('touchmove', handleTouchStart, { passive: false }); // Allow dragging
+        canvas.addEventListener('touchmove', handleTouchStart, { passive: false });
         canvas.addEventListener('touchend', handleTouchEnd);
 
         // Init Stars
@@ -69,8 +100,6 @@ export default function GalacticGame({ dayCount, onClose }) {
         }
 
         const gameLoop = () => {
-            if (gameState !== 'playing') return;
-
             frames++;
 
             // Update dimensions dynamically if resized
@@ -96,11 +125,10 @@ export default function GalacticGame({ dayCount, onClose }) {
             else ship.dy *= 0.9; // Friction
 
             ship.y += ship.dy;
-            // Boundaries
             if (ship.y < 0) ship.y = 0;
             if (ship.y + ship.height > canvas.height) ship.y = canvas.height - ship.height;
 
-            // Draw Ship (Triangle)
+            // Draw Ship
             ctx.shadowColor = '#00f3ff';
             ctx.shadowBlur = 10;
             ctx.fillStyle = '#00f3ff';
@@ -112,7 +140,7 @@ export default function GalacticGame({ dayCount, onClose }) {
             ctx.fill();
             ctx.shadowBlur = 0;
 
-            // --- Obstacles (Asteroids) ---
+            // --- Obstacles ---
             if (frames % Math.floor(spawnRate) === 0) {
                 obstacles.push({
                     x: canvas.width,
@@ -123,7 +151,7 @@ export default function GalacticGame({ dayCount, onClose }) {
                 });
             }
 
-            ctx.fillStyle = '#6366f1'; // Indigo asteroids
+            ctx.fillStyle = '#6366f1';
             obstacles.forEach((obs, index) => {
                 obs.x -= obs.speed;
 
@@ -137,10 +165,8 @@ export default function GalacticGame({ dayCount, onClose }) {
                     setGameState('gameover');
                 }
 
-                // Draw Asteroid
                 ctx.fillRect(obs.x, obs.y, obs.width, obs.height);
 
-                // Remove off-screen
                 if (obs.x + obs.width < 0) {
                     obstacles.splice(index, 1);
                     setScore(s => s + 10);
@@ -150,14 +176,11 @@ export default function GalacticGame({ dayCount, onClose }) {
             animationFrameId = requestAnimationFrame(gameLoop);
         };
 
-        if (gameState === 'playing') {
-            gameLoop();
-        }
+        gameLoop();
 
         return () => {
             window.removeEventListener('keydown', handleKeyDown);
             window.removeEventListener('keyup', handleKeyUp);
-
             if (canvas) {
                 canvas.removeEventListener('touchstart', handleTouchStart);
                 canvas.removeEventListener('touchmove', handleTouchStart);
@@ -172,61 +195,62 @@ export default function GalacticGame({ dayCount, onClose }) {
             <canvas ref={canvasRef} className="block w-full h-[300px] sm:h-[400px]" />
 
             {/* UI Overlay */}
-            <div className="absolute top-4 left-4 text-white font-mono text-xl z-10 drop-shadow-md">
-                SCORE: {score} | LEVEL: {dayCount}
+            <div className="absolute top-4 left-4 text-white font-mono text-xl z-10 drop-shadow-md flex gap-4">
+                <span>SCORE: {score}</span>
+                <span className={`${attempts >= MAX_ATTEMPTS ? 'text-red-400' : 'text-cyan-400'}`}>
+                    ATTEMPTS: {attempts}/{MAX_ATTEMPTS}
+                </span>
             </div>
 
+            {/* Start Screen */}
             {gameState === 'start' && (
                 <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/70 backdrop-blur-sm z-20">
                     <h2 className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-indigo-500 mb-4 animate-pulse">
                         GALACTIC DRIFT
                     </h2>
                     <div className="text-indigo-200 mb-8 text-center px-4">
-                        {/* Visual Progress Bar */}
-                        <div className="flex flex-col items-center gap-2 mb-4">
-                            <div className="flex gap-1">
-                                {Array.from({ length: 14 }).map((_, i) => (
-                                    <div
-                                        key={i}
-                                        className={`
-                                        w-4 h-6 rounded-sm border transition-all duration-300
-                                        ${i < dayCount
-                                                ? 'bg-cyan-400 border-cyan-300 shadow-[0_0_8px_#22d3ee]'
-                                                : 'bg-indigo-950/50 border-indigo-800'
-                                            }
-                                    `}
-                                        title={`Day ${i + 1}`}
-                                    />
-                                ))}
-                            </div>
-                            <p className="text-sm font-mono text-cyan-300 tracking-widest">MISSION PROGRESS: {dayCount}/14</p>
-                        </div>
-
-                        <p className="text-sm mt-4 text-indigo-300">Use Arrow Keys (⬆/⬇) to dodge obstacles.</p>
+                        <p className="text-sm font-mono text-cyan-300 tracking-widest mb-2">MISSION DAY: {dayCount}/14</p>
+                        <p className="text-xs text-red-300 font-bold bg-red-900/30 p-2 rounded border border-red-500/50">
+                            שים לב: יש לך {MAX_ATTEMPTS} ניסיונות בלבד להיום!<br />
+                            כל התחלת משחק נחשבת ניסיון (גם אם יוצאים באמצע).
+                        </p>
                     </div>
-                    <button
-                        onClick={() => setGameState('playing')}
-                        className="px-8 py-3 bg-cyan-500 hover:bg-cyan-400 text-black font-bold rounded-xl shadow-[0_0_15px_#00f3ff] transition-all transform hover:scale-105"
-                    >
-                        START MISSION
-                    </button>
+
+                    {attempts < MAX_ATTEMPTS ? (
+                        <button
+                            onClick={handleStartGame}
+                            className="px-8 py-3 bg-cyan-500 hover:bg-cyan-400 text-black font-bold rounded-xl shadow-[0_0_15px_#00f3ff] transition-all transform hover:scale-105"
+                        >
+                            START MISSION ({MAX_ATTEMPTS - attempts} LEFT)
+                        </button>
+                    ) : (
+                        <div className="text-red-400 font-bold border border-red-500 p-3 rounded-xl bg-red-900/20">
+                            🔒 אין ניסיונות נוספים להיום
+                        </div>
+                    )}
                 </div>
             )}
 
+            {/* Game Over Screen */}
             {gameState === 'gameover' && (
                 <div className="absolute inset-0 flex flex-col items-center justify-center bg-red-900/80 backdrop-blur-sm z-20">
                     <h2 className="text-4xl font-bold text-white mb-2">MISSION FAILED</h2>
                     <p className="text-xl text-red-200 mb-6">Final Score: {score}</p>
-                    <div className="flex gap-4">
-                        <button
-                            onClick={() => {
-                                setScore(0);
-                                setGameState('playing');
-                            }}
-                            className="px-6 py-2 bg-white text-red-900 font-bold rounded-lg hover:bg-gray-200"
-                        >
-                            RETRY
-                        </button>
+
+                    <div className="flex gap-4 items-center">
+                        {attempts < MAX_ATTEMPTS ? (
+                            <button
+                                onClick={handleStartGame}
+                                className="px-6 py-2 bg-white text-red-900 font-bold rounded-lg hover:bg-gray-200 transition-colors"
+                            >
+                                RETRY ({MAX_ATTEMPTS - attempts} LEFT)
+                            </button>
+                        ) : (
+                            <span className="text-white font-mono bg-black/50 px-4 py-2 rounded">
+                                🚫 NO RETRIES LEFT
+                            </span>
+                        )}
+
                         <button
                             onClick={onClose}
                             className="px-6 py-2 border border-white text-white font-bold rounded-lg hover:bg-white/10"
@@ -237,11 +261,23 @@ export default function GalacticGame({ dayCount, onClose }) {
                 </div>
             )}
 
-            {/* Mobile Controls Overlay (visible only on touch devices ideally, but kept simple here) */}
-            <div className="absolute bottom-4 right-4 flex flex-col gap-2 sm:hidden z-10 opacity-50">
-                {/* Can implement touch controls later if needed, current version relies on keyboard but keys work on some mobile browsers if virtual keyboard is up. 
-                 Real mobile support would require touchstart listeners. Adding generic instruction for now. */}
-            </div>
+            {/* Locked Screen (אם נגמרו הניסיונות) */}
+            {gameState === 'locked' && (
+                <div className="absolute inset-0 flex flex-col items-center justify-center bg-gray-900/90 backdrop-blur-md z-20 text-center p-6">
+                    <div className="text-6xl mb-4">🔒</div>
+                    <h2 className="text-2xl font-bold text-white mb-2">המערכת נעולה</h2>
+                    <p className="text-gray-300 mb-6">
+                        ניצלת את כל {MAX_ATTEMPTS} הניסיונות שלך להיום.<br />
+                        הציון האחרון נשמר. נתראה מחר!
+                    </p>
+                    <button
+                        onClick={onClose}
+                        className="px-8 py-3 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-xl shadow-lg transition-all"
+                    >
+                        חזור לדשבורד
+                    </button>
+                </div>
+            )}
         </div>
     );
 }

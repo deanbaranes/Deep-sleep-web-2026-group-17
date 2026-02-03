@@ -17,18 +17,19 @@
 }
 
 [data-theme='light'] {
-  --bg-gradient-start: #f1f5f9;
+  --bg-gradient-start: #dcfce7;
   /* Slate 100 - Very Light Background */
-  --bg-gradient-end: #e2e8f0;
+  --bg-gradient-end: #bbf7d0;
   /* Slate 200 */
 
   /* DARK CARD VARIABLES FOR LIGHT MODE */
-  --text-main: #ffffff;
+  --text-main: #fcfcfc;
   /* White text on dark cards */
-  --text-secondary: #c7d2fe;
+  --text-secondary: #fefdfd;
   /* Indigo 200 */
 
-  --glass-bg: rgba(30, 27, 75, 0.90);
+
+  --glass-bg: rgba(28, 151, 223, 0.9);
   /* Deep Indigo (almost opaque) */
   --glass-bg-accent: rgba(255, 255, 255, 0.1);
   /* White/Light accent */
@@ -41,6 +42,16 @@
   --input-bg: rgba(0, 0, 0, 0.3);
   /* Dark input background */
   --input-border: rgba(255, 255, 255, 0.2);
+}
+
+/* 👇 החלק החדש: מסגרת שחורה רק לכותרות במצב יום */
+[data-theme='light'] h1,
+[data-theme='light'] h2,
+[data-theme='light'] h3,
+[data-theme='light'] h4,
+[data-theme='light'] h5,
+[data-theme='light'] h6 {
+  text-shadow: 1px 1px 0 #000, -1px 1px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000;
 }
 
 [data-theme='dark'] {

@@ -19,8 +19,18 @@ export default function SpaceLayout({ children, className = "", backgroundChildr
         <ThemeToggle />
       </div>
 
-      {/* Stars Animation (Background handled by body/CSS variables) */}
-      <div className="stars-bg z-0 pointer-events-none"></div>
+      {/* DARK MODE: Deep Space Background (Preserved) */}
+      <div className="hidden dark:block absolute inset-0 z-0 pointer-events-none">
+        <div className="stars-bg w-full h-full"></div>
+      </div>
+
+      {/* LIGHT MODE: Sky Blue Gradient + Sun */}
+      <div className="block dark:hidden absolute inset-0 z-0 pointer-events-none bg-gradient-to-b from-sky-400 to-blue-200 overflow-hidden">
+        {/* CSS Sun */}
+        <div className="absolute top-10 right-10 w-32 h-32 bg-yellow-300 rounded-full blur-xl opacity-80 shadow-[0_0_80px_rgba(253,224,71,1)] animate-pulse"></div>
+        {/* Sun Core */}
+        <div className="absolute top-14 right-14 w-24 h-24 bg-yellow-200 rounded-full shadow-inner"></div>
+      </div>
 
       {/* Custom Background Elements (e.g. Moon, Shooting Stars) */}
       {backgroundChildren}

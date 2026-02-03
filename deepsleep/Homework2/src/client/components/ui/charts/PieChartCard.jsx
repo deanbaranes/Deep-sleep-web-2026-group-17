@@ -88,7 +88,7 @@ export default function PieChartCard({ title, data, colors = DEFAULT_PIE_COLORS 
                                     <div className="w-3 h-3 rounded-full shadow-sm" style={{ backgroundColor: color }}></div>
                                     <span className="text-indigo-100 capitalize">{t(label)}</span>
                                 </div>
-                                <span className="font-bold text-white">{count} <span className="text-indigo-400 text-[10px]">({percent}%)</span></span>
+                                <span className="font-bold text-white">{count} <span className="text-[#2563eb] text-[10px] font-bold">({percent}%)</span></span>
                             </div>
                         );
                     })}

@@ -299,7 +299,7 @@ export default function SleepForm() {
           {current.type === "text" && (
             <textarea
               placeholder={current.placeholder}
-              value={answers[current.key]}
+              value={answers[current.key] || ""}
               onChange={(e) => setAnswers({ ...answers, [current.key]: e.target.value })}
               className="w-full h-32 bg-[var(--input-bg)] text-[var(--text-main)] placeholder-[var(--text-secondary)] border border-[var(--input-border)] rounded-xl p-4 focus:ring-2 focus:ring-cyan-400 focus:border-transparent outline-none resize-none transition-all"
             />
