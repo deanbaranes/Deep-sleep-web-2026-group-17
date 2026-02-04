@@ -27,3 +27,5 @@ dist-ssr
 # Security
 serviceAccountKey.json
 backend/config/serviceAccountKey.json
+
+api/serviceAccountKey.json.json
