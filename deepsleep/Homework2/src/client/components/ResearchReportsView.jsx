@@ -87,7 +87,19 @@ export default function ResearchReportsView({ onBack }) {
                 });
 
                 return rowData;
+            }).filter(row => {
+                // Filter Logic: Keep row ONLY if at least one question in this category has an answer
+                // We check if any of the dynamic headers has a value
+                const dynamicHeaders = relevantQuestions.map(q => q.text);
+                const hasAnyAnswer = dynamicHeaders.some(header => row[header] && row[header] !== "");
+                return hasAnyAnswer;
             });
+
+            if (rows.length === 0) {
+                alert("לא נמצאו תשובות רלוונטיות בקטגוריה זו.");
+                setExporting(false);
+                return;
+            }
 
             // 4. Create Workbook
             const worksheet = XLSX.utils.json_to_sheet(rows, { header: headers });

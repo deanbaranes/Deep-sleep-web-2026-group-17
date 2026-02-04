@@ -1,16 +1,46 @@
-# React + Vite
+# DeepSleep Project
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+## Project Description
+DeepSleep is a platform designed for sleep research management. It allows students to log their sleep data and researchers/teachers to manage and view reports.
 
-Currently, two official plugins are available:
+## Getting Started
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+### Prerequisites
+- Node.js installed on your machine.
+- npm (comes with Node.js).
 
-## React Compiler
+### Installation
+1. Clone the repository or download the project files.
+2. Open a terminal in the project folder and install the dependencies:
+   ```bash
+   npm install
+   ```
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+### Configuration
+1. Create a `.env` file in the root directory.
+2. Add the following configuration (ensure it matches your local setup):
+   ```env
+   PORT=3333
+   VITE_API_URL=http://localhost:3333
+   ```
+   *Note: The server defaults to port 3333.*
 
-## Expanding the ESLint configuration
+### Running the Application
+To run the full application, you need to start both the backend server and the frontend client.
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+**1. Start the Backend Server:**
+Open a terminal in the project root and run:
+```bash
+npm start
+```
+The server will start on `http://localhost:3333`.
+
+**2. Start the Frontend Client:**
+Open a **separate** terminal in the project root and run:
+```bash
+npm run dev
+```
+The application will usually run on `http://localhost:5173` (check the terminal output for the exact address).
+
+## Resources
+- [Live Site Link (if available)](your-link-here)
