@@ -1,16 +1,51 @@
-# React + Vite
+# Deep Sleep Project 😴
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A comprehensive sleep tracking and research dashboard designed for students and teachers. This application allows students to log their sleep patterns and researchers/teachers to analyze the data through an interactive dashboard.
 
-Currently, two official plugins are available:
+## 🚀 Getting Started
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+### Prerequisites
+- Node.js (v18 or higher recommended)
+- npm
 
-## React Compiler
+### Installation
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+1. Clone the repository.
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
+3. Verify your `.env` file configuration (Port defaults to 3000/3333).
 
-## Expanding the ESLint configuration
+### Running the Application
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+This project requires both a backend API and a frontend client to be running simultaneously.
+
+**1. Start the Backend API**
+This runs the Express server for handling data requests.
+```bash
+npm run start
+```
+> **Note:** The server typically runs on `http://localhost:3333` (overriding default 3000 for development).
+
+**2. Start the Frontend Application**
+This runs the React + Vite development server.
+```bash
+npm run dev
+```
+> **Access the app at:** `http://localhost:5173`
+
+## 🛠️ Technology Stack
+
+- **Frontend:** React, Vite, Tailwind CSS (Design System)
+- **Backend:** Node.js, Express
+- **Database:** Firebase (Admin SDK)
+- **Data Visualization:** Recharts
+- **Export Capabilities:** XLSX (Excel export)
+
+## 📂 Project Structure
+
+- `/src` - React frontend code
+- `/src/client/components` - UI Components (TeacherDashboard, SleepForm, etc.)
+- `/backend` - Express routes and controllers
+- `/api` - API configuration
