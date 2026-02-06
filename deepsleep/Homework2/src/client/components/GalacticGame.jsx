@@ -54,13 +54,13 @@ const LEVEL_CONFIGS = [
     { name: 'The Void', color: '#fff', difficulty: 3.5, duration: 90, env: 'crystals', desc: 'Hyper-speed crystal zone.' },
 ];
 
-export default function GalacticGame({ dayCount, onClose }) {
+export default function GalacticGame({ dayCount, onClose, userId }) {
     // --- State ---
     const [view, setView] = useState('map'); // 'map', 'game', 'win', 'lose', 'locked'
     const [currentLevel, setCurrentLevel] = useState(dayCount);
 
     const [attempts, setAttempts] = useState(() => {
-        const key = `galactic_voyage_attempts_day_${dayCount}`;
+        const key = `galactic_voyage_attempts_${userId || 'guest'}_day_${dayCount}`;
         const saved = localStorage.getItem(key);
         return saved ? parseInt(saved, 10) : 0;
     });
@@ -69,9 +69,9 @@ export default function GalacticGame({ dayCount, onClose }) {
 
     // Save attempts
     useEffect(() => {
-        const key = `galactic_voyage_attempts_day_${dayCount}`;
+        const key = `galactic_voyage_attempts_${userId || 'guest'}_day_${dayCount}`;
         localStorage.setItem(key, attempts.toString());
-    }, [attempts, dayCount]);
+    }, [attempts, dayCount, userId]);
 
 
     // --- Handlers ---
@@ -244,11 +244,19 @@ function ActiveGameSession({ levelIdx, onWin, onLose, onBack }) {
         const canvas = canvasRef.current;
         if (!canvas) return;
 
+        // High DPI Scaling
+        const dpr = window.devicePixelRatio || 1;
+
         // Init Check
-        canvas.width = canvas.parentElement.clientWidth;
-        canvas.height = canvas.parentElement.clientHeight;
+        const logicalWidth = canvas.parentElement.clientWidth;
+        const logicalHeight = canvas.parentElement.clientHeight;
+
+        canvas.width = logicalWidth * dpr;
+        canvas.height = logicalHeight * dpr;
 
         const ctx = canvas.getContext('2d');
+        ctx.scale(dpr, dpr);
+
         let frameId;
         let frames = 0;
         let startTime = Date.now();
@@ -256,27 +264,38 @@ function ActiveGameSession({ levelIdx, onWin, onLose, onBack }) {
 
         // Game Parameters
         const duration = config.duration;
-        // Steeper difficulty scaling
-        // Speed: 6.5 (lvl 1) -> ~14 (lvl 8)
-        const speed = 6.5 + (config.difficulty * 2.5);
 
-        // Spawn Rate: Faster! 40 frames -> 15 frames
-        const spawnRate = Math.max(15, 50 - (config.difficulty * 12));
+        // Difficulty Logic:
+        // We use the config.difficulty (1 - 3.5) but we scale it slightly by day count 
+        // effectively prevents it from becoming "too easy" if we loop back to a simpler biome,
+        // BUT we clamp it so it never becomes impossible.
+        const dayFactor = Math.min(2.0, (levelIdx - 1) * 0.1); // Slowly adds up to +2.0 difficulty over 20 days
+        const finalDifficulty = Math.min(5.5, config.difficulty + dayFactor); // CAP difficulty at 5.5
+
+        // Speed: Cap at 10.0 (Reasonable fast pace, not sonic speed)
+        const speed = Math.min(10.0, 4.5 + (finalDifficulty * 1.8));
+
+        // Spawn Rate: Cap at 20 frames (Fast but not a solid wall)
+        // Note: Lower number = Faster spawn
+        const spawnRate = Math.max(20, 60 - (finalDifficulty * 8));
 
         // Fuel Params
-        const fuelDrain = 0.1 + (config.difficulty * 0.02); // Drains ~6-10% per second
+        // Drains max 15% per second
+        const fuelDrain = Math.min(0.15, 0.05 + (finalDifficulty * 0.02));
         const fuelSpawnRate = 180; // ~3 seconds
 
         // Objects
-        const ship = { x: 50, y: canvas.height / 2, w: 40, h: 24, dy: 0 };
+        // Use LOGICAL height for ship position
+        const ship = { x: 50, y: logicalHeight / 2, w: 40, h: 24, dy: 0 };
         const obstacles = [];
         const collectibles = [];
         const particles = [];
 
         // Background Stars
+        // Use LOGICAL dimensions for stars
         const stars = Array.from({ length: 120 }, () => ({
-            x: Math.random() * canvas.width,
-            y: Math.random() * canvas.height,
+            x: Math.random() * logicalWidth,
+            y: Math.random() * logicalHeight,
             size: Math.random() * 2,
             speed: Math.random() * 8 + 2
         }));
@@ -290,7 +309,7 @@ function ActiveGameSession({ levelIdx, onWin, onLose, onBack }) {
             e.preventDefault();
             const y = e.touches[0].clientY;
             const myY = canvas.getBoundingClientRect().top;
-            if (y < myY + canvas.height / 2) { keys.ArrowUp = true; keys.ArrowDown = false; }
+            if (y < myY + logicalHeight / 2) { keys.ArrowUp = true; keys.ArrowDown = false; }
             else { keys.ArrowDown = true; keys.ArrowUp = false; }
         };
         const handleTouchEnd = () => { keys.ArrowUp = false; keys.ArrowDown = false; };
@@ -389,20 +408,27 @@ function ActiveGameSession({ levelIdx, onWin, onLose, onBack }) {
             }
 
             // Resize
-            if (canvas.width !== canvas.parentElement.clientWidth) {
-                canvas.width = canvas.parentElement.clientWidth;
-                canvas.height = canvas.parentElement.clientHeight;
+            if (canvas.width !== Math.round(canvas.parentElement.clientWidth * dpr)) {
+                canvas.width = canvas.parentElement.clientWidth * dpr;
+                canvas.height = canvas.parentElement.clientHeight * dpr;
+                ctx.scale(dpr, dpr);
             }
 
+            // Derive logical width from physical width and current scale
+            // (Note: canvas.width updates in resize block above, so this is safe)
+            const currentLogicalWidth = canvas.width / dpr;
+            const currentLogicalHeight = canvas.height / dpr;
+
             // --- Draw ---
+            // Clear LOGICAL Width/Height area
             ctx.fillStyle = '#000000';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.fillRect(0, 0, currentLogicalWidth, currentLogicalHeight);
 
             // Stars
             ctx.fillStyle = 'white';
             stars.forEach(s => {
                 s.x -= s.speed * (speed * 0.1);
-                if (s.x < 0) s.x = canvas.width;
+                if (s.x < 0) s.x = currentLogicalWidth; // Loop within logical width
                 const flicker = Math.random() > 0.9 ? 0.3 : 1;
                 ctx.globalAlpha = (Math.random() * 0.5 + 0.5) * flicker;
                 ctx.beginPath();
@@ -432,7 +458,8 @@ function ActiveGameSession({ levelIdx, onWin, onLose, onBack }) {
             // --- Ship ---
             ship.y += ship.dy;
             if (ship.y < 0) ship.y = 0;
-            if (ship.y + ship.h > canvas.height) ship.y = canvas.height - ship.h;
+            // Use LOGICAL Height for clamping
+            if (ship.y + ship.h > currentLogicalHeight) ship.y = currentLogicalHeight - ship.h;
 
             if (keys.ArrowUp) ship.dy = -7;
             else if (keys.ArrowDown) ship.dy = 7;
@@ -475,8 +502,8 @@ function ActiveGameSession({ levelIdx, onWin, onLose, onBack }) {
             // --- Collectibles (Fuel) ---
             if (frames % fuelSpawnRate === 0) {
                 collectibles.push({
-                    x: canvas.width,
-                    y: Math.random() * (canvas.height - 40),
+                    x: currentLogicalWidth, // Spawn at right edge (Logical)
+                    y: Math.random() * (currentLogicalHeight - 40),
                     w: 25, h: 25
                 });
             }
@@ -515,8 +542,8 @@ function ActiveGameSession({ levelIdx, onWin, onLose, onBack }) {
                 }
 
                 obstacles.push({
-                    x: canvas.width,
-                    y: Math.random() * (canvas.height - 50),
+                    x: currentLogicalWidth, // Spawn at right edge (Logical)
+                    y: Math.random() * (currentLogicalHeight - 50),
                     w: 40 + Math.random() * 30, // Bigger
                     h: 40 + Math.random() * 30,
                     type: obstacleType,

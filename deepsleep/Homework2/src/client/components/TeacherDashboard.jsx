@@ -68,12 +68,39 @@ export default function TeacherDashboard() {
   const handleCopyLink = () => {
     const origin = window.location.origin;
     const url = `${origin}/?experimentId=${user.experimentId}&classId=${user.classId}`;
-    navigator.clipboard.writeText(url).then(() => {
-      alert(`הקישור לתלמידים הועתק בהצלחה!\n${url}`);
-    }).catch(err => {
-      console.error("Failed to copy", err);
-      prompt("העתק את הקישור ידנית:", url);
-    });
+
+    const fallbackCopy = (text) => {
+      try {
+        const textArea = document.createElement("textarea");
+        textArea.value = text;
+        textArea.style.position = "fixed";
+        textArea.style.left = "-9999px";
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+        const successful = document.execCommand('copy');
+        document.body.removeChild(textArea);
+        if (successful) {
+          alert(`הקישור לתלמידים הועתק בהצלחה!\n${text}`);
+        } else {
+          prompt("העתק את הקישור ידנית:", text);
+        }
+      } catch (err) {
+        console.error("Fallback copy failed", err);
+        prompt("העתק את הקישור ידנית:", text);
+      }
+    };
+
+    if (navigator.clipboard && window.isSecureContext) {
+      navigator.clipboard.writeText(url).then(() => {
+        alert(`הקישור לתלמידים הועתק בהצלחה!\n${url}`);
+      }).catch(err => {
+        console.error("Async copy failed", err);
+        fallbackCopy(url);
+      });
+    } else {
+      fallbackCopy(url);
+    }
   };
 
   // ---------------- תצוגת הוספת שאלות כיתתיות ----------------

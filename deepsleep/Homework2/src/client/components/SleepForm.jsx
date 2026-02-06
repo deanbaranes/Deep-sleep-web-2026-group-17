@@ -99,7 +99,7 @@ export default function SleepForm() {
   if (showGame) {
     return (
       <div className="fixed inset-0 z-[100] bg-black flex items-center justify-center p-4">
-        <GalacticGame dayCount={submissionCount} onClose={() => setShowGame(false)} />
+        <GalacticGame dayCount={submissionCount} onClose={() => setShowGame(false)} userId={user?.id} />
       </div>
     );
   }
