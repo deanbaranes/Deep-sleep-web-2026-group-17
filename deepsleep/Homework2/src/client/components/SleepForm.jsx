@@ -98,7 +98,7 @@ export default function SleepForm() {
   // If Game is active, show overlay
   if (showGame) {
     return (
-      <div className="fixed inset-0 z-[100] bg-black/90 flex items-center justify-center p-4">
+      <div className="fixed inset-0 z-[100] bg-black flex items-center justify-center p-4">
         <GalacticGame dayCount={submissionCount} onClose={() => setShowGame(false)} />
       </div>
     );

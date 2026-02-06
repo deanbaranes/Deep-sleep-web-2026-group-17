@@ -10,6 +10,7 @@ export default function ResearchReportsView({ onBack }) {
     const [questions, setQuestions] = useState([]);
     const [loading, setLoading] = useState(true);
     const [exporting, setExporting] = useState(false);
+    const [anonymousMap, setAnonymousMap] = useState({});
 
     // Categories definition matching Dashboard
     const CATEGORIES = [
@@ -28,6 +29,38 @@ export default function ResearchReportsView({ onBack }) {
                     fetchAllSleepEntries(),
                     fetchAllGlobalActiveQuestions()
                 ]);
+
+                // Generate Anonymized Map
+                // 1. Extract all unique students with their class info
+                const uniqueStudents = new Map();
+                loadedEntries.forEach(e => {
+                    const key = `${e.classId}_${e.studentId}`;
+                    if (!uniqueStudents.has(key)) {
+                        uniqueStudents.set(key, {
+                            studentId: e.studentId,
+                            classId: e.classId || "",
+                            sortKey: `${e.classId || "Z"}_${e.studentId}` // Sort by Class then ID
+                        });
+                    }
+                });
+
+                // 2. Sort deterministically
+                const sortedStudents = Array.from(uniqueStudents.values()).sort((a, b) =>
+                    a.sortKey.localeCompare(b.sortKey)
+                );
+
+                // 3. Create ID Map (studentId -> Sequential Number)
+                // Note: We map actual studentId to the sequential number. 
+                // If a studentId exists in multiple classes (rare but possible), this logic treats them as distinct entities per class 
+                // due to the composite key above, but for the map we usually want 1:1 if the ID is truly global.
+                // Assuming simple case: studentId is unique enough or we scope by class.
+                // Let's map "classId_studentId" -> Number to be safe across classes.
+                const newIdMap = {};
+                sortedStudents.forEach((s, index) => {
+                    newIdMap[`${s.classId}_${s.studentId}`] = index + 1;
+                });
+
+                setAnonymousMap(newIdMap);
                 setEntries(loadedEntries);
                 setQuestions(loadedQuestions);
             } catch (err) {
@@ -43,62 +76,91 @@ export default function ResearchReportsView({ onBack }) {
         setExporting(true);
         try {
             // 1. Filter questions by category
-            const relevantQuestions = questions.filter(q => q.category === category.id);
+            const categoryQuestions = questions.filter(q => q.category === category.id);
 
-            if (relevantQuestions.length === 0) {
+            if (categoryQuestions.length === 0) {
                 alert("לא נמצאו שאלות בקטגוריה זו.");
                 setExporting(false);
                 return;
             }
 
-            // 2. Prepare Headers
-            // Static headers + Dynamic Question Text
+            // 2. Filter Rows: Keep only entries that have at least one answer to any of the category questions
+            const relevantEntries = entries.filter(entry => {
+                return categoryQuestions.some(q => {
+                    const answerKey = `custom_${q.id}`;
+                    const val = entry[answerKey];
+                    // Valid answer check
+                    if (val === undefined || val === null) return false;
+                    if (typeof val === 'string') return val.trim().length > 0;
+                    if (Array.isArray(val)) return val.length > 0;
+                    return true;
+                });
+            });
+
+            if (relevantEntries.length === 0) {
+                alert("לא נמצאו תלמידים שענו על שאלות בקטגוריה זו.");
+                setExporting(false);
+                return;
+            }
+
+            // 3. Filter Columns: Based on the relevant entries, see which questions were actually answered
+            const questionsWithAnswers = categoryQuestions.filter(q => {
+                const answerKey = `custom_${q.id}`;
+                return relevantEntries.some(entry => {
+                    const val = entry[answerKey];
+                    if (val === undefined || val === null) return false;
+                    if (typeof val === 'string') return val.trim().length > 0;
+                    if (Array.isArray(val)) return val.length > 0;
+                    return true;
+                });
+            });
+
+            // 4. Prepare Headers
             const headers = [
                 "User ID",
                 "Date",
                 "Class ID",
                 "Experiment ID",
-                ...relevantQuestions.map(q => q.text)
+                ...questionsWithAnswers.map(q => q.text)
             ];
 
-            // 3. Map Data
-            const rows = entries.map(entry => {
+            // 5. Map Data (Using relevantEntries)
+            const rows = relevantEntries.map(entry => {
+                // Lookup anonymized ID using composite key
+                const compositeKey = `${entry.classId || ""}_${entry.studentId}`;
+                const anonId = anonymousMap[compositeKey] || "N/A";
+
                 const rowData = {
-                    "User ID": entry.userId,
+                    "User ID": anonId,
                     "Date": entry.date?.toDate ? entry.date.toDate().toLocaleDateString() : entry.date,
                     "Class ID": entry.classId || "",
                     "Experiment ID": entry.experimentId || ""
                 };
 
-                // Fill in answers for relevant questions
-                relevantQuestions.forEach(q => {
-                    // Construct the key used in answers map
-                    // In SleepForm, custom questions are saved as `custom_${q.id}`
+                questionsWithAnswers.forEach(q => {
                     const answerKey = `custom_${q.id}`;
-
                     let val = entry[answerKey];
 
-                    // Handle arrays (multi-select)
                     if (Array.isArray(val)) {
                         val = val.join(", ");
                     }
-
                     rowData[q.text] = val || "";
                 });
 
                 return rowData;
             });
 
-            // 4. Create Workbook
+            // 6. Create Workbook
             const worksheet = XLSX.utils.json_to_sheet(rows, { header: headers });
             const workbook = XLSX.utils.book_new();
 
-            // Sanitize sheet name (remove : \ / ? * [ ])
             const validSheetName = category.label.replace(/[:\\/?*\[\]]/g, "-");
             XLSX.utils.book_append_sheet(workbook, worksheet, validSheetName);
 
-            // 5. Download
-            XLSX.writeFile(workbook, `Report_${category.id}_${new Date().toISOString().slice(0, 10)}.xlsx`);
+            // 7. Download
+            XLSX.writeFile(workbook, `Report_${category.id}_filtered_${new Date().toISOString().slice(0, 10)}.xlsx`);
+
+            alert(`הדוח נוצר בהצלחה! (נמצאו ${relevantEntries.length} שורות רלוונטיות)`);
 
         } catch (err) {
             console.error("Export failed", err);
