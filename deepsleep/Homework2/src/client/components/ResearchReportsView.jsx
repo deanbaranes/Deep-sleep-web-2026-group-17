@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
-import * as XLSX from "xlsx";
 import { fetchAllSleepEntries } from "../../server/services/sleepEntriesService";
 import { fetchAllGlobalActiveQuestions } from "../../server/services/classCustomizationService";
+import { generateResearchReportExcel } from "../utils/excelGenerator";
 import SpaceLayout from './ui/SpaceLayout';
 import GlassCard from './ui/GlassCard';
 
@@ -50,11 +50,6 @@ export default function ResearchReportsView({ onBack }) {
                 );
 
                 // 3. Create ID Map (studentId -> Sequential Number)
-                // Note: We map actual studentId to the sequential number. 
-                // If a studentId exists in multiple classes (rare but possible), this logic treats them as distinct entities per class 
-                // due to the composite key above, but for the map we usually want 1:1 if the ID is truly global.
-                // Assuming simple case: studentId is unique enough or we scope by class.
-                // Let's map "classId_studentId" -> Number to be safe across classes.
                 const newIdMap = {};
                 sortedStudents.forEach((s, index) => {
                     newIdMap[`${s.classId}_${s.studentId}`] = index + 1;
@@ -75,96 +70,11 @@ export default function ResearchReportsView({ onBack }) {
     const handleExport = (category) => {
         setExporting(true);
         try {
-            // 1. Filter questions by category
-            const categoryQuestions = questions.filter(q => q.category === category.id);
-
-            if (categoryQuestions.length === 0) {
-                alert("לא נמצאו שאלות בקטגוריה זו.");
-                setExporting(false);
-                return;
-            }
-
-            // 2. Filter Rows: Keep only entries that have at least one answer to any of the category questions
-            const relevantEntries = entries.filter(entry => {
-                return categoryQuestions.some(q => {
-                    const answerKey = `custom_${q.id}`;
-                    const val = entry[answerKey];
-                    // Valid answer check
-                    if (val === undefined || val === null) return false;
-                    if (typeof val === 'string') return val.trim().length > 0;
-                    if (Array.isArray(val)) return val.length > 0;
-                    return true;
-                });
-            });
-
-            if (relevantEntries.length === 0) {
-                alert("לא נמצאו תלמידים שענו על שאלות בקטגוריה זו.");
-                setExporting(false);
-                return;
-            }
-
-            // 3. Filter Columns: Based on the relevant entries, see which questions were actually answered
-            const questionsWithAnswers = categoryQuestions.filter(q => {
-                const answerKey = `custom_${q.id}`;
-                return relevantEntries.some(entry => {
-                    const val = entry[answerKey];
-                    if (val === undefined || val === null) return false;
-                    if (typeof val === 'string') return val.trim().length > 0;
-                    if (Array.isArray(val)) return val.length > 0;
-                    return true;
-                });
-            });
-
-            // 4. Prepare Headers
-            const headers = [
-                "User ID",
-                "Date",
-                "Class ID",
-                "Experiment ID",
-                ...questionsWithAnswers.map(q => q.text)
-            ];
-
-            // 5. Map Data (Using relevantEntries)
-            const rows = relevantEntries.map(entry => {
-                // Lookup anonymized ID using composite key
-                const compositeKey = `${entry.classId || ""}_${entry.studentId}`;
-                const anonId = anonymousMap[compositeKey] || "N/A";
-
-                const rowData = {
-                    "User ID": anonId,
-                    "Date": entry.date?.toDate ? entry.date.toDate().toLocaleDateString() : entry.date,
-                    "Class ID": entry.classId || "",
-                    "Experiment ID": entry.experimentId || ""
-                };
-
-                questionsWithAnswers.forEach(q => {
-                    const answerKey = `custom_${q.id}`;
-                    let val = entry[answerKey];
-
-                    if (Array.isArray(val)) {
-                        val = val.join(", ");
-                    }
-                    rowData[q.text] = val || "";
-                });
-
-                return rowData;
-            });
-
-            // 6. Create Workbook
-            const worksheet = XLSX.utils.json_to_sheet(rows, { header: headers });
-            const workbook = XLSX.utils.book_new();
-
-            const validSheetName = category.label.replace(/[:\\/?*\[\]]/g, "-");
-            XLSX.utils.book_append_sheet(workbook, worksheet, validSheetName);
-
-            // 7. Download
-            XLSX.writeFile(workbook, `Report_${category.id}_filtered_${new Date().toISOString().slice(0, 10)}.xlsx`);
-
-            alert(`הדוח נוצר בהצלחה! (נמצאו ${relevantEntries.length} שורות רלוונטיות)`);
-
+            const count = generateResearchReportExcel(entries, questions, category, anonymousMap);
+            alert(`הדוח נוצר בהצלחה! (נמצאו ${count} שורות רלוונטיות)`);
         } catch (err) {
             console.error("Export failed", err);
-            alert("שגיאה ביצירת הדוח");
+            alert(err.message || "שגיאה ביצירת הדוח");
         } finally {
             setExporting(false);
         }
