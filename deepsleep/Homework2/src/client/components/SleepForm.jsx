@@ -11,6 +11,10 @@ import { STATIC_STEPS } from "../data/staticQuestions";
 
 import { useAppContext } from "../context/AppContext";
 
+// --- Sub-components ---
+import SuccessScreen from "./form/SuccessScreen";
+import QuestionInput from "./form/QuestionInput";
+
 /**
  * SleepForm Component
  * -------------------
@@ -107,59 +111,13 @@ export default function SleepForm() {
   // Success Screen
   if (step >= steps.length) {
     return (
-      <SpaceLayout>
-        {/* Success Glass Card */}
-        <GlassCard className="w-full max-w-lg text-center" animateFloat={true} glowColor="indigo">
-          <div className="mb-6 flex justify-center">
-            <div className="w-20 h-20 rounded-full bg-green-500/20 border-2 border-green-400 flex items-center justify-center shadow-[0_0_20px_rgba(74,222,128,0.4)]">
-              <span className="text-4xl">✅</span>
-            </div>
-          </div>
-
-          <h2 className="text-3xl font-bold mb-2">כל הכבוד!</h2>
-
-          {saveStatus === 'saving' && <p className="text-yellow-400 animate-pulse">⏳ שומר נתונים...</p>}
-          {saveStatus === 'success' && <p className="text-green-400">היומן היומי נשמר בהצלחה! כל הכבוד!</p>}
-          {saveStatus === 'error' && (
-            <div className="bg-red-500/20 border border-red-500 p-4 rounded-xl mb-4">
-              <p className="text-red-300 font-bold">❌ שגיאה בשמירה:</p>
-              <p className="text-red-200 text-sm font-mono">{saveError}</p>
-            </div>
-          )}
-
-
-          <p className="text-[var(--text-secondary)] mb-8">היומן היומי הושלם.</p>
-
-          <div className="space-y-4">
-            <div className="p-4 rounded-xl bg-[var(--glass-bg-accent)] border border-[var(--glass-border)] mb-6">
-              <p className="text-sm text-[var(--text-secondary)] mb-2">התקדמות המשימה שלך</p>
-              <div className="flex justify-between items-end mb-1">
-                <span className="font-mono font-bold text-cyan-400">DAY {submissionCount} / 14</span>
-                <span className="text-xs text-[var(--text-secondary)]">{Math.round((submissionCount / 14) * 100)}%</span>
-              </div>
-              <div className="h-2 w-full bg-indigo-950 rounded-full overflow-hidden">
-                <div
-                  className="h-full bg-gradient-to-r from-green-400 to-cyan-500 shadow-[0_0_10px_#00f3ff]"
-                  style={{ width: `${Math.min(100, (submissionCount / 14) * 100)}%` }}
-                />
-              </div>
-            </div>
-
-            <button
-              onClick={() => setShowGame(true)}
-              className="w-full py-4 rounded-xl bg-gradient-to-r from-purple-600 to-pink-500 text-white font-bold tracking-wide shadow-[0_0_20px_rgba(236,72,153,0.4)] hover:scale-105 transition-transform animate-pulse"
-            >
-              🚀 שחק במשחק החלל (שלב {submissionCount})
-            </button>
-
-
-
-            <button onClick={logout} className="w-full py-3 text-sm text-[var(--text-secondary)] hover:text-[var(--text-main)] transition-colors">
-              התנתק וחזור להתחלה
-            </button>
-          </div>
-        </GlassCard>
-      </SpaceLayout >
+      <SuccessScreen
+        submissionCount={submissionCount}
+        saveStatus={saveStatus}
+        saveError={saveError}
+        onShowGame={() => setShowGame(true)}
+        onLogout={logout}
+      />
     );
   }
 
@@ -252,60 +210,14 @@ export default function SleepForm() {
         </h2>
 
         {/* Dynamic Input Area */}
-        <div className="min-h-[120px] mb-8">
-
-          {/* Choice / Multi Buttons */}
-          {(current.type === "select" || current.type === "multi") && (
-            <div className="grid grid-cols-1 gap-3">
-              {current.options.map((opt) => {
-                const isSelected = current.type === "multi"
-                  ? (answers[current.key] || []).includes(opt.value)
-                  : answers[current.key] === opt.value;
-
-                return (
-                  <button
-                    key={opt.value}
-                    onClick={() => {
-                      if (current.type === "multi") toggleMultiSelect(opt.value);
-                      else {
-                        setAnswers({ ...answers, [current.key]: opt.value });
-                        // Auto-advance with slight delay for visual feedback
-                        setTimeout(() => setStep(step + 1), 200);
-                      }
-                    }}
-                    className={`
-                      relative overflow-hidden rounded-xl py-4 px-6 font-medium text-right transition-all duration-300 border
-                      ${isSelected
-                        ? "bg-indigo-600/90 border-cyan-400 text-white neon-border shadow-[0_0_15px_rgba(0,243,255,0.4)] translate-x-1"
-                        : "bg-[var(--glass-bg-accent)] border-[var(--glass-border)] text-[var(--text-main)] hover:bg-[var(--glass-bg)] hover:border-indigo-400 hover:scale-[1.02]"
-                      }
-                    `}
-                  >
-                    <div className="flex justify-between items-center relative z-10">
-                      <span>{opt.label}</span>
-                      {current.type === "multi" && (
-                        <div className={`w-5 h-5 rounded-full border flex items-center justify-center transition-colors ${isSelected ? 'bg-cyan-400 border-cyan-400 text-black' : 'border-indigo-400/50'}`}>
-                          {isSelected && <span className="text-xs">✓</span>}
-                        </div>
-                      )}
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
-          )}
-
-          {/* Text Area */}
-          {current.type === "text" && (
-            <textarea
-              placeholder={current.placeholder}
-              value={answers[current.key] || ""}
-              onChange={(e) => setAnswers({ ...answers, [current.key]: e.target.value })}
-              className="w-full h-32 bg-[var(--input-bg)] text-[var(--text-main)] placeholder-[var(--text-secondary)] border border-[var(--input-border)] rounded-xl p-4 focus:ring-2 focus:ring-cyan-400 focus:border-transparent outline-none resize-none transition-all"
-            />
-          )}
-
-        </div>
+        <QuestionInput
+          current={current}
+          answers={answers}
+          setAnswers={setAnswers}
+          setStep={setStep}
+          step={step}
+          toggleMultiSelect={toggleMultiSelect}
+        />
 
         {/* Navigation Actions */}
         <div className="flex flex-col gap-3">
@@ -342,9 +254,6 @@ export default function SleepForm() {
         </div>
 
       </GlassCard>
-
-
-
     </SpaceLayout>
   );
 }
